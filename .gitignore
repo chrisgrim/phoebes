@@ -1,0 +1,35 @@
+# WordPress specific files
+wp-config.php
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/backup-db/
+wp-content/cache/
+wp-content/backups/
+
+# WordPress core files (if this is a theme/plugin development)
+# Remove these if this is a full WordPress installation
+wp-admin/
+wp-includes/
+
+# Various IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node modules if you're using npm
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
