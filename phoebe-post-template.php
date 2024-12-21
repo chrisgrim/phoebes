@@ -5,6 +5,12 @@ Template Name: Phoebes Post Template
 Template Post Type: post
 */
 
+// Force navigation script to load last
+add_action('wp_footer', function() {
+    wp_dequeue_script('phoebes-navigation');
+    wp_enqueue_script('phoebes-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true);
+}, 100);
+
 get_header();
 ?>
 
@@ -14,11 +20,8 @@ get_header();
         while ( have_posts() ) :
             the_post();
             
-            // Check if there's a featured image and a video URL
             if (has_post_thumbnail() && ($video_url = get_post_meta(get_the_ID(), '_video_url', true))) {
-                // Get the featured image
                 $thumbnail = get_the_post_thumbnail_url();
-
                 ?>
                 <div id="initial-content" class="info-section">
                     <div class="info-section absolute z-10 w-full bg-gradient-to-b from-black to-transparent opacity-90 pb-24 h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)]">
@@ -251,12 +254,10 @@ get_header();
                         var videoUrl = '<?php echo esc_url($video_url); ?>';
                         var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-                        // Hide the initial content
                         initialContent.style.display = 'none';
                         playedContent.style.display = 'block';
                         playedBottomContent.style.display = isMobile ? 'block' : 'none';
 
-                        // Simpler video element for better mobile compatibility
                         var videoHtml = `
                             <video 
                                 id="videoPlayer" 
@@ -276,28 +277,41 @@ get_header();
 
                         videoContainer.innerHTML = videoHtml;
                         
-                        // Get the video element
                         var video = document.getElementById('videoPlayer');
 
-                        // Try to autoplay the video
-                        var playPromise = video.play();
-                        
-                        if (playPromise !== undefined) {
-                            playPromise.then(() => {
-                                // Autoplay started successfully
-                            }).catch(error => {
-                                console.log("Autoplay prevented:", error);
-                                // Show a message or UI element indicating the user needs to tap play
-                            });
-                        }
-
                         if (isMobile) {
-                            // Mobile-specific setup
+                            function enterFullScreen(element) {
+                                if (element.requestFullscreen) {
+                                    element.requestFullscreen();
+                                } else if (element.webkitRequestFullscreen) {
+                                    element.webkitRequestFullscreen();
+                                } else if (element.mozRequestFullScreen) {
+                                    element.mozRequestFullScreen();
+                                } else if (element.msRequestFullscreen) {
+                                    element.msRequestFullscreen();
+                                } else if (element.webkitEnterFullscreen) {
+                                    element.webkitEnterFullscreen();
+                                }
+                            }
+
+                            var playPromise = video.play();
+                            if (playPromise !== undefined) {
+                                playPromise.then(() => {
+                                    setTimeout(() => {
+                                        enterFullScreen(video);
+                                    }, 100);
+                                }).catch(() => {
+                                    video.addEventListener('play', function onFirstPlay() {
+                                        enterFullScreen(video);
+                                        video.removeEventListener('play', onFirstPlay);
+                                    });
+                                });
+                            }
+
                             document.getElementById('top-info').style.display = 'none';
                             video.style.position = 'relative';
                             video.style.zIndex = '999';
                         } else {
-                            // Desktop-specific setup
                             video.addEventListener('play', function() {
                                 document.getElementById('top-info').style.display = 'none';
                             });
@@ -311,9 +325,7 @@ get_header();
                             });
                         }
 
-                        // Error handling
-                        video.addEventListener('error', function(e) {
-                            console.error('Video Error:', video.error);
+                        video.addEventListener('error', function() {
                             alert('Error loading video. Please try again.');
                         });
                     });
@@ -325,5 +337,21 @@ get_header();
         ?>
 
     </main><!-- #main -->
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileNav = document.getElementById('mobile-navigation');
+            const button = mobileNav ? mobileNav.querySelector('.menu-toggle') : null;
+
+            if (!mobileNav || !button) return;
+
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                mobileNav.classList.toggle('toggled');
+                const isExpanded = mobileNav.classList.contains('toggled');
+                button.setAttribute('aria-expanded', isExpanded);
+            });
+        });
+    </script>
 
 <?php

@@ -28,12 +28,12 @@
 <div id="page" class="site">
     <a class="skip-link screen-reader-text sr-only" href="#primary"><?php esc_html_e( 'Skip to content', 'phoebes' ); ?></a>
 
-    <header id="masthead" class="site-header bg-black shadow-md md:hidden h-24">
+    <header id="mobile-masthead" class="site-header bg-black shadow-md md:hidden h-24">
         <div class="site-branding absolute inset-0 h-24 flex justify-center items-center">
             <a href="/" class="z-50"><img class="w-36 h-10" src="https://thephoebes.com/wp-content/uploads/2023/12/the_phoebes_01.png" alt=""></a>
         </div>
-        <nav id="site-navigation" class="main-navigation absolute flex items-center mobile">
-            <button class="menu-toggle bg-transparent border-none p-0 absolute left-6 top-11" aria-controls="primary-menu" aria-expanded="false">
+        <nav id="mobile-navigation" class="main-navigation absolute flex items-center mobile">
+            <button class="menu-toggle bg-transparent border-none p-0 absolute left-6 top-11" aria-controls="secondary-menu" aria-expanded="false">
             <span class="hamburger-line block w-6 h-0.5 bg-white my-1"></span>
             <span class="hamburger-line block w-6 h-0.5 bg-white my-1"></span> <!-- New line added -->
         </button>
@@ -53,9 +53,8 @@
 
     </header>
 
-    <header id="masthead" class="site-header bg-black shadow-md hidden md:block">
-        <nav id="site-navigation" class="main-navigation h-32 bg-black flex items-center justify-center">
-            <button class="menu-toggle text-gray-800 hover:text-gray-600 focus:outline-none focus:shadow-outline px-4 py-2" aria-controls="primary-menu" aria-expanded="false"><?php esc_html_e( 'Primary Menu', 'phoebes' ); ?></button>
+    <header id="desktop-masthead" class="site-header bg-black shadow-md hidden md:block">
+        <nav id="desktop-navigation" class="main-navigation h-32 bg-black flex items-center justify-center">
             <?php
             wp_nav_menu(
                 array(
@@ -65,6 +64,6 @@
                 )
             );
             ?>
-        </nav><!-- #site-navigation -->
-    </header><!-- #masthead -->
+        </nav>
+    </header>
 </div>
