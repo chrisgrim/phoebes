@@ -247,57 +247,76 @@ get_header();
                         var initialContent = document.getElementById('initial-content');
                         var playedContent = document.getElementById('played-content');
                         var playedBottomContent = document.getElementById('played-bottom-content');
-                        var topInfo = document.getElementById('top-info'); // Get the top-info element
                         var videoContainer = playedContent.querySelector('.video-container');
+                        var videoUrl = '<?php echo esc_url($video_url); ?>';
+                        var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-                        // Hide the initial content and show the played content
+                        // Hide the initial content
                         initialContent.style.display = 'none';
                         playedContent.style.display = 'block';
-                        if (window.innerWidth <= 768) {
-                            playedBottomContent.style.display = 'block';
-                        } else {
-                            playedBottomContent.style.display = 'hidden'; 
-                        }
+                        playedBottomContent.style.display = isMobile ? 'block' : 'none';
 
-                        // Assuming $video_url is the direct URL to the video file hosted on your WordPress site
-                        var videoUrl = '<?php echo esc_url($video_url); ?>';
+                        // Simpler video element for better mobile compatibility
+                        var videoHtml = `
+                            <video 
+                                id="videoPlayer" 
+                                style="width: 100%; height: 100%; object-fit: contain; background: #000;"
+                                controls
+                                playsinline
+                                webkit-playsinline
+                                x5-playsinline
+                                x5-video-player-type="h5"
+                                x5-video-player-fullscreen="true"
+                                preload="auto"
+                            >
+                                <source src="${videoUrl}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        `;
 
-                        // Embed the video using a video tag instead of an iframe
-                        var videoHtml = '<video style="width: 100%; height: 100%;" controls autoplay>' +
-                                        '<source src="' + videoUrl + '" type="video/mp4">' +
-                                        'Your browser does not support the video tag.' +
-                                        '</video>';
                         videoContainer.innerHTML = videoHtml;
+                        
+                        // Get the video element
+                        var video = document.getElementById('videoPlayer');
 
-                        var video = videoContainer.querySelector('video');
-
-                        // Listen for play event to hide top-info
-                        video.addEventListener('play', function() {
-                            topInfo.style.display = 'none';
-                        });
-
-                        // Listen for pause event to show top-info
-                        video.addEventListener('pause', function() {
-                            topInfo.style.display = 'block';
-                        });
-
-                        // Optional: Handle video end event to show top-info
-                        video.addEventListener('ended', function() {
-                            topInfo.style.display = 'block';
-                        });
-
-                        // Optional: If you still want to attempt to go fullscreen when playing the video
-                        if (video.requestFullscreen) {
-                            video.requestFullscreen();
-                        } else if (video.mozRequestFullScreen) { // Firefox
-                            video.mozRequestFullScreen();
-                        } else if (video.webkitRequestFullscreen) { // Chrome, Safari and Opera
-                            video.webkitRequestFullscreen();
-                        } else if (video.msRequestFullscreen) { // IE/Edge
-                            video.msRequestFullscreen();
+                        // Try to autoplay the video
+                        var playPromise = video.play();
+                        
+                        if (playPromise !== undefined) {
+                            playPromise.then(() => {
+                                // Autoplay started successfully
+                            }).catch(error => {
+                                console.log("Autoplay prevented:", error);
+                                // Show a message or UI element indicating the user needs to tap play
+                            });
                         }
-                    });
 
+                        if (isMobile) {
+                            // Mobile-specific setup
+                            document.getElementById('top-info').style.display = 'none';
+                            video.style.position = 'relative';
+                            video.style.zIndex = '999';
+                        } else {
+                            // Desktop-specific setup
+                            video.addEventListener('play', function() {
+                                document.getElementById('top-info').style.display = 'none';
+                            });
+
+                            video.addEventListener('pause', function() {
+                                document.getElementById('top-info').style.display = 'block';
+                            });
+
+                            video.addEventListener('ended', function() {
+                                document.getElementById('top-info').style.display = 'block';
+                            });
+                        }
+
+                        // Error handling
+                        video.addEventListener('error', function(e) {
+                            console.error('Video Error:', video.error);
+                            alert('Error loading video. Please try again.');
+                        });
+                    });
                 </script>
                 <?php
             }

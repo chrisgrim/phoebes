@@ -6,6 +6,7 @@
  */
 
 get_header();
+error_log('Header loaded');
 ?>
 
 	<main id="primary" class="site-main">
@@ -116,7 +117,6 @@ get_header();
                         // No posts found
                         echo '<p>No posts found.</p>';
                     }
-
                     // Restore original Post Data
                     wp_reset_postdata();
                     ?>
@@ -127,3 +127,4 @@ get_header();
 
 <?php
 get_footer();
+
