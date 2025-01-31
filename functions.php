@@ -95,6 +95,15 @@ function phoebes_scripts() {
     if (is_singular() && comments_open() && get_option('thread_comments')) {
         wp_enqueue_script('comment-reply');
     }
+    
+    // Add video upload script only on upload page
+    if (is_page_template('template-parts/upload-page.php')) {
+        wp_enqueue_script('video-upload', get_template_directory_uri() . '/js/video-upload.js', array('jquery'), '1.0', true);
+        wp_localize_script('video-upload', 'uploadVars', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('video_upload')
+        ));
+    }
 }
 
 // Remove other wp_enqueue_scripts actions
@@ -309,3 +318,125 @@ function register_festival_editions_taxonomy() {
     );
     register_taxonomy('festival-editions', array('post'), $args);
 }
+
+// Increase upload size limit for admins
+function increase_upload_size_limit($size) {
+    if (current_user_can('manage_options')) {
+        return 536870912; // 512MB in bytes
+    }
+    return $size;
+}
+add_filter('upload_size_limit', 'increase_upload_size_limit');
+
+// Add custom mime types
+function add_custom_mime_types($mimes) {
+    $mimes['mp4'] = 'video/mp4';
+    $mimes['mov'] = 'video/quicktime';
+    $mimes['avi'] = 'video/x-msvideo';
+    return $mimes;
+}
+add_filter('upload_mimes', 'add_custom_mime_types');
+
+// Handle the upload
+function handle_video_upload() {
+    header('Content-Type: application/json');
+    
+    try {
+        error_log('=== Video Upload Debug Start ===');
+        error_log('POST data: ' . print_r($_POST, true));
+        error_log('FILES data: ' . print_r($_FILES, true));
+        
+        $upload_password = defined('UPLOAD_ACCESS_PASSWORD') ? UPLOAD_ACCESS_PASSWORD : '';
+        
+        if (!isset($_POST['access_password']) || $_POST['access_password'] !== $upload_password) {
+            error_log('Password mismatch. Got: ' . $_POST['access_password']);
+            wp_send_json_error(['message' => 'Invalid access password']);
+            exit;
+        }
+
+        if (!check_ajax_referer('video_upload', 'video_upload_nonce', false)) {
+            error_log('Nonce verification failed');
+            wp_send_json_error(['message' => 'Invalid security token']);
+            exit;
+        }
+
+        if (empty($_FILES['video_file'])) {
+            error_log('No video file in request');
+            wp_send_json_error(['message' => 'No video file received']);
+            exit;
+        }
+
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+        // Create post
+        $post_data = array(
+            'post_title'   => sanitize_text_field($_POST['movie_title']),
+            'post_content' => sanitize_textarea_field($_POST['movie_credits']),
+            'post_status'  => 'pending',
+            'post_type'    => 'post'
+        );
+
+        $post_id = wp_insert_post($post_data);
+        
+        if (is_wp_error($post_id)) {
+            error_log('Post creation error: ' . $post_id->get_error_message());
+            wp_send_json_error(['message' => 'Error creating post: ' . $post_id->get_error_message()]);
+            exit;
+        }
+
+        // Handle video upload
+        $video_upload = wp_handle_upload($_FILES['video_file'], ['test_form' => false]);
+        
+        if (isset($video_upload['error'])) {
+            error_log('Video upload error: ' . $video_upload['error']);
+            wp_send_json_error(['message' => 'Video upload error: ' . $video_upload['error']]);
+            exit;
+        }
+
+        // Create video attachment
+        $video_attachment = array(
+            'post_mime_type' => $video_upload['type'],
+            'post_title'     => $_POST['movie_title'],
+            'post_content'   => '',
+            'post_status'    => 'inherit'
+        );
+
+        $attach_id = wp_insert_attachment($video_attachment, $video_upload['file'], $post_id);
+        
+        if (is_wp_error($attach_id)) {
+            error_log('Attachment creation error: ' . $attach_id->get_error_message());
+            wp_send_json_error(['message' => 'Error creating attachment']);
+            exit;
+        }
+
+        wp_update_attachment_metadata($attach_id, wp_generate_attachment_metadata($attach_id, $video_upload['file']));
+        update_post_meta($post_id, '_video_url', $video_upload['url']);
+
+        wp_send_json_success(['message' => 'Video uploaded successfully! It will be reviewed before publishing.']);
+        exit;
+
+    } catch (Exception $e) {
+        error_log('Unexpected error: ' . $e->getMessage());
+        wp_send_json_error(['message' => 'An unexpected error occurred']);
+        exit;
+    }
+}
+add_action('wp_ajax_nopriv_handle_video_upload', 'handle_video_upload');
+add_action('wp_ajax_handle_video_upload', 'handle_video_upload');
+
+function add_google_analytics() {
+    ?>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XEN6QQQXHG"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-XEN6QQQXHG');
+    </script>
+    <?php
+}
+add_action('wp_head', 'add_google_analytics');

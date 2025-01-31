@@ -39,8 +39,8 @@
     "map": false
   },
   "scripts": {
-        "watch": "TAILWIND_MODE=watch tailwindcss -i ./css/tailwind.css -o ./css/app.css --postcss -w",
-        "prod": "TAILWIND_MODE=build tailwindcss -i ./css/tailwind.css -o ./css/app.css --postcss --minify"
+        "dev": "TAILWIND_MODE=watch tailwindcss -i ./css/tailwind.css -o ./css/app.css --postcss -w",
+        "build": "TAILWIND_MODE=build tailwindcss -i ./css/tailwind.css -o ./css/app.css --postcss --minify"
     },
   "main": "index.js"
 }

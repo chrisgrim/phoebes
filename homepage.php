@@ -44,26 +44,31 @@ error_log('Header loaded');
         <div id="description" class="w-full pt-16">
             <div class="w-full md:w-2/3 lg:w-3/6 m-auto px-8">
                 <p class="text-white">
-                    Since 2024, the Corner presents the Phoebe’s–the phirst critically acclaimed philm phestival Petaluma has never seen. Join us as we gather in celebration of independent storytelling, obscure creativity, and general silliness gracing the greater North Bay Area (and beyond).
+                    Since 2024, the Corner presents the Phoebe's–the phirst critically acclaimed philm phestival Petaluma has never seen. Join us as we gather in celebration of independent storytelling, obscure creativity, and general silliness gracing the greater North Bay Area (and beyond).
                 </p>
             </div>
         </div>
-        <div id="categories" class="flex justify-center px-4 relative py-16">
+
+        <!-- Annual Categories -->
+        <div class="flex justify-center px-4 relative mt-16">
             <div class="flex md:flex-wrap overflow-x-auto md:overflow-x-visible snap-x snap-mandatory space-x-1 md:space-x-0 md:justify-center" style="scrollbar-width: none;">
                 <?php
-                $categories = get_categories([
+                // Get both annual categories
+                $annual_categories = get_categories([
                     'orderby' => 'name',
                     'order'   => 'DESC',
-                    'number'  => 6, // Limit to 6 categories
-                    'exclude' => array(22, 31), // Exclude advertisement category
+                    'include' => array(
+                        get_category_by_slug('2nd-annual')->term_id,
+                        get_category_by_slug('1st-annual')->term_id
+                    )
                 ]);
 
-                foreach ($categories as $category) {
+                foreach ($annual_categories as $category) {
                     $category_image_url = z_taxonomy_image_url($category->term_id);
                     if (!$category_image_url) {
-                        $category_image_url = 'path/to/default/image.jpg'; // Path to a default image
+                        $category_image_url = 'path/to/default/image.jpg';
                     }
-                ?>
+                    ?>
                     <a href="<?php echo esc_url(get_category_link($category->term_id)); ?>" class="snap-start border border-transparent hover:border-[#ba9e5e]">
                         <div class="bg-cover bg-center text-white h-[28rem] md:h-[30rem] w-72 md:m-1" style="background-image: url('<?php echo esc_url($category_image_url); ?>'); background-blend-mode: darken;">
                             <div class="flex flex-col justify-end text-center bg-black bg-opacity-25 h-full p-4 relative hover:bg-transparent">
@@ -73,17 +78,12 @@ error_log('Header loaded');
                             </div>
                         </div>
                     </a>
-                <?php
-                } // End of foreach loop
+                    <?php
+                }
                 ?>
             </div>
-            <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 text-center">
-                <a href="https://thephoebes.com/all-posts/">
-                    <button class="home-button border-none text-white pb-2">View All</button>
-                </a>
-            </div>
-
         </div>
+
         <div id="Sponsors">
             <div class="w-full bg-white my-20 py-24 text-center">
                 <h3 class="text-3xl mb-12 font-medium tracking-[1rem]">SPONSORS</h3>

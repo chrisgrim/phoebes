@@ -26,7 +26,13 @@ get_header();
                 <div id="initial-content" class="info-section">
                     <div class="info-section absolute z-10 w-full bg-gradient-to-b from-black to-transparent opacity-90 pb-24 h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)]">
                         <div class="text-center m-auto w-full md:w-3/5">
-                            <p class="pt-20 uppercase">2024 Phoebes</p>
+                            <p class="pt-20 uppercase">
+                                <?php 
+                                // Get the post's year
+                                $post_year = get_the_date('Y');
+                                echo esc_html($post_year) . ' Phoebes';
+                                ?>
+                            </p>
                             <h2 class="text-white text-5xl font-bold leading-none tracking-[.2rem] mt-8"> <!-- Adjusted line-height -->
                                 <?php the_title(); ?>
                             </h2>
@@ -330,6 +336,24 @@ get_header();
                         });
                     });
                 </script>
+                <?php
+            } else {
+                // Fallback for posts without video/thumbnail
+                ?>
+                <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+                    <div class="entry-content">
+                        <h1 class="entry-title"><?php the_title(); ?></h1>
+                        <?php 
+                        the_content();
+                        
+                        // Display credits if they exist
+                        $credits = get_post_meta(get_the_ID(), '_movie_credits', true);
+                        if ($credits) {
+                            echo '<div class="movie-credits">' . wp_kses_post($credits) . '</div>';
+                        }
+                        ?>
+                    </div>
+                </article>
                 <?php
             }
 
