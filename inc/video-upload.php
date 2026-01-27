@@ -7,21 +7,6 @@
 if (!defined('ABSPATH')) exit;
 
 /**
- * Configure SMTP for wp_mail (Mailtrap for dev)
- */
-add_action('phpmailer_init', function($phpmailer) {
-    $phpmailer->isSMTP();
-    $phpmailer->Host       = 'sandbox.smtp.mailtrap.io';
-    $phpmailer->SMTPAuth   = true;
-    $phpmailer->Port       = 2525;
-    $phpmailer->Username   = '61573a6dd49827';
-    $phpmailer->Password   = '3538bfac999fda';
-    $phpmailer->SMTPSecure = 'tls';
-    $phpmailer->From       = 'register@everythingimmersive.com';
-    $phpmailer->FromName   = 'The Phoebes Film Festival';
-});
-
-/**
  * Generate and send access code via email
  */
 function phoebes_send_access_code() {
