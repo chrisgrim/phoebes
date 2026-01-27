@@ -162,6 +162,12 @@ a:visited.category-type-link {
     font-size: 0.8rem;
 }
 
+/* Category filter buttons */
+.filter-btn.active {
+    background-color: #ba9e5e;
+    color: white;
+}
+
 /* Nav
 --------------------------------------------- */
 
@@ -387,4 +393,27 @@ a:visited.category-type-link {
 #fileName_1 {
     border: 0px solid #ccc;
     border-radius: 4px;
+}
+
+/*-------------------------------------
+            Upload Form
+-------------------------------------*/
+
+.upload-step input[type="text"],
+.upload-step input[type="email"],
+.upload-step textarea {
+    background-color: #27272a !important;
+    color: white !important;
+    border: 1px solid #3f3f46 !important;
+}
+
+.upload-step input::placeholder,
+.upload-step textarea::placeholder {
+    color: #71717a !important;
+}
+
+.upload-step input:focus,
+.upload-step textarea:focus {
+    border-color: #BA9E5E !important;
+    outline: none !important;
 }

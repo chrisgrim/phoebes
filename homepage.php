@@ -6,7 +6,6 @@
  */
 
 get_header();
-error_log('Header loaded');
 ?>
 
 	<main id="primary" class="site-main">
@@ -35,7 +34,7 @@ error_log('Header loaded');
 
 
         <video id="myVideo" class="hidden" controls>
-            <source src="https://thephoebes.com/wp-content/uploads/Everywhere-You-Look_01_Small.mp4" type="video/mp4">
+            <source src="<?php echo esc_url(site_url('/wp-content/uploads/Everywhere-You-Look_01_Small.mp4')); ?>" type="video/mp4">
             Your browser does not support HTML5 video.
         </video>
 
@@ -64,7 +63,7 @@ error_log('Header loaded');
                 ]);
 
                 foreach ($annual_categories as $category) {
-                    $category_image_url = z_taxonomy_image_url($category->term_id);
+                    $category_image_url = phoebes_get_category_image_url($category->term_id);
                     if (!$category_image_url) {
                         $category_image_url = 'path/to/default/image.jpg';
                     }

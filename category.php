@@ -115,49 +115,11 @@ $category_query = new WP_Query($args);
             <p>No posts found.</p>
         <?php endif; ?>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            const posts = document.querySelectorAll('.post-item');
-
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class from all other buttons
-                    filterButtons.forEach(btn => {
-                        if (btn !== this) {
-                            btn.classList.remove('active');
-                        }
-                    });
-
-                    // Toggle current button
-                    this.classList.toggle('active');
-                    
-                    // If no buttons are active, show all posts
-                    const activeButtons = document.querySelectorAll('.filter-btn.active');
-                    if (activeButtons.length === 0) {
-                        posts.forEach(post => post.style.display = 'block');
-                        return;
-                    }
-                    
-                    // Filter posts based on active category
-                    const selectedCategory = this.dataset.category;
-                    posts.forEach(post => {
-                        const postCategories = post.dataset.categories.split(' ');
-                        const shouldShow = postCategories.includes(selectedCategory);
-                        post.style.display = shouldShow ? 'block' : 'none';
-                    });
-                });
-            });
-        });
-    </script>
-
-    <style>
-        .filter-btn.active {
-            background-color: #ba9e5e;
-            color: white;
-        }
-    </style>
 </main>
 
-<?php get_footer(); ?>
+<?php 
+// Enqueue category filter script
+wp_enqueue_script('phoebes-category-filters', get_template_directory_uri() . '/js/category-filters.js', array(), '1.0.0', true);
+
+get_footer(); 
+?>

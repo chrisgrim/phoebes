@@ -81,11 +81,7 @@ function phoebes_scripts() {
     wp_enqueue_style('my-style', get_stylesheet_directory_uri() . '/css/app.css', false, '1.0', 'all');
     wp_enqueue_style('custom-style', get_template_directory_uri() . '/custom-style.css', array(), wp_get_theme()->get('Version'));
     
-    // Scripts
-    wp_deregister_script('jquery');
-    wp_register_script('jquery', includes_url('/js/jquery/jquery.js'), false, NULL, false);
-    wp_enqueue_script('jquery');
-    
+    // Scripts - jQuery will be handled by defer_scripts() function below
     wp_enqueue_script('phoebes-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true);
     
     if (is_page_template('homepage.php')) {
@@ -94,15 +90,6 @@ function phoebes_scripts() {
     
     if (is_singular() && comments_open() && get_option('thread_comments')) {
         wp_enqueue_script('comment-reply');
-    }
-    
-    // Add video upload script only on upload page
-    if (is_page_template('template-parts/upload-page.php')) {
-        wp_enqueue_script('video-upload', get_template_directory_uri() . '/js/video-upload.js', array('jquery'), '1.0', true);
-        wp_localize_script('video-upload', 'uploadVars', array(
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('video_upload')
-        ));
     }
 }
 
@@ -129,11 +116,15 @@ if ( defined( 'JETPACK__VERSION' ) ) {
     require get_template_directory() . '/inc/jetpack.php';
 }
 
+// Video upload functionality
+require get_template_directory() . '/inc/video-upload.php';
+
 add_filter('walker_nav_menu_start_el', 'add_image_to_menu_item', 10, 4);
 function add_image_to_menu_item($item_output, $item, $depth, $args) {
     if ($item->ID == 11) {
-        $image_url = 'https://thephoebes.com/wp-content/uploads/2023/12/the_phoebes_01.png';
-        $item_output = "<div class='menu-centered-item w-40'><a href='" . $item->url . "'><img src='" . $image_url . "' alt='' /></a></div>";
+        $image_url = site_url('/wp-content/uploads/2023/12/the_phoebes_01.png');
+        $site_name = get_bloginfo('name');
+        $item_output = "<div class='menu-centered-item w-40'><a href='" . esc_url($item->url) . "'><img src='" . esc_url($image_url) . "' alt='" . esc_attr($site_name . ' - The Phoebe\'s Film Festival') . "' /></a></div>";
     }
     return $item_output;
 }
@@ -145,39 +136,23 @@ function custom_video_meta_box() {
 
 function video_meta_box_output($post) {
     wp_enqueue_media();
+    wp_enqueue_script('phoebes-video-meta-box', get_template_directory_uri() . '/js/video-meta-box.js', array('jquery'), _S_VERSION, true);
+    wp_nonce_field('video_meta_box_nonce_action', 'video_meta_box_nonce');
     $video_url = get_post_meta($post->ID, '_video_url', true);
     echo '<div>';
     echo '<input type="hidden" id="video_url" name="video_url" value="' . esc_attr($video_url) . '">';
     echo '<button type="button" id="upload_video_button">Choose Video</button>';
     echo '<div id="video_message">' . ($video_url ? 'Video Attached' : 'No Video Attached') . '</div>';
     echo '</div>';
-    ?>
-    <script>
-        jQuery(document).ready(function($) {
-            $('#upload_video_button').click(function(e) {
-                e.preventDefault();
-                var mediaUploader = wp.media({
-                    title: 'Choose Video',
-                    button: {
-                        text: 'Choose Video'
-                    },
-                    library: {
-                        type: 'video'
-                    },
-                    multiple: false
-                }).on('select', function() {
-                    var attachment = mediaUploader.state().get('selection').first().toJSON();
-                    $('#video_url').val(attachment.url);
-                    $('#video_message').text('Video Attached');
-                }).open();
-            });
-        });
-    </script>
-    <?php
 }
 
 add_action('save_post', 'save_video_meta_box');
 function save_video_meta_box($post_id) {
+    // Check nonce
+    if (!isset($_POST['video_meta_box_nonce']) || !wp_verify_nonce($_POST['video_meta_box_nonce'], 'video_meta_box_nonce_action')) {
+        return;
+    }
+    
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (!current_user_can('edit_post', $post_id)) return;
     if (isset($_POST['video_url'])) {
@@ -319,112 +294,15 @@ function register_festival_editions_taxonomy() {
     register_taxonomy('festival-editions', array('post'), $args);
 }
 
-// Increase upload size limit for admins
-function increase_upload_size_limit($size) {
-    if (current_user_can('manage_options')) {
-        return 536870912; // 512MB in bytes
-    }
-    return $size;
-}
-add_filter('upload_size_limit', 'increase_upload_size_limit');
-
 // Add custom mime types
 function add_custom_mime_types($mimes) {
     $mimes['mp4'] = 'video/mp4';
     $mimes['mov'] = 'video/quicktime';
     $mimes['avi'] = 'video/x-msvideo';
+    $mimes['webm'] = 'video/webm';
     return $mimes;
 }
 add_filter('upload_mimes', 'add_custom_mime_types');
-
-// Handle the upload
-function handle_video_upload() {
-    header('Content-Type: application/json');
-    
-    try {
-        error_log('=== Video Upload Debug Start ===');
-        error_log('POST data: ' . print_r($_POST, true));
-        error_log('FILES data: ' . print_r($_FILES, true));
-        
-        $upload_password = defined('UPLOAD_ACCESS_PASSWORD') ? UPLOAD_ACCESS_PASSWORD : '';
-        
-        if (!isset($_POST['access_password']) || $_POST['access_password'] !== $upload_password) {
-            error_log('Password mismatch. Got: ' . $_POST['access_password']);
-            wp_send_json_error(['message' => 'Invalid access password']);
-            exit;
-        }
-
-        if (!check_ajax_referer('video_upload', 'video_upload_nonce', false)) {
-            error_log('Nonce verification failed');
-            wp_send_json_error(['message' => 'Invalid security token']);
-            exit;
-        }
-
-        if (empty($_FILES['video_file'])) {
-            error_log('No video file in request');
-            wp_send_json_error(['message' => 'No video file received']);
-            exit;
-        }
-
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-
-        // Create post
-        $post_data = array(
-            'post_title'   => sanitize_text_field($_POST['movie_title']),
-            'post_content' => sanitize_textarea_field($_POST['movie_credits']),
-            'post_status'  => 'pending',
-            'post_type'    => 'post'
-        );
-
-        $post_id = wp_insert_post($post_data);
-        
-        if (is_wp_error($post_id)) {
-            error_log('Post creation error: ' . $post_id->get_error_message());
-            wp_send_json_error(['message' => 'Error creating post: ' . $post_id->get_error_message()]);
-            exit;
-        }
-
-        // Handle video upload
-        $video_upload = wp_handle_upload($_FILES['video_file'], ['test_form' => false]);
-        
-        if (isset($video_upload['error'])) {
-            error_log('Video upload error: ' . $video_upload['error']);
-            wp_send_json_error(['message' => 'Video upload error: ' . $video_upload['error']]);
-            exit;
-        }
-
-        // Create video attachment
-        $video_attachment = array(
-            'post_mime_type' => $video_upload['type'],
-            'post_title'     => $_POST['movie_title'],
-            'post_content'   => '',
-            'post_status'    => 'inherit'
-        );
-
-        $attach_id = wp_insert_attachment($video_attachment, $video_upload['file'], $post_id);
-        
-        if (is_wp_error($attach_id)) {
-            error_log('Attachment creation error: ' . $attach_id->get_error_message());
-            wp_send_json_error(['message' => 'Error creating attachment']);
-            exit;
-        }
-
-        wp_update_attachment_metadata($attach_id, wp_generate_attachment_metadata($attach_id, $video_upload['file']));
-        update_post_meta($post_id, '_video_url', $video_upload['url']);
-
-        wp_send_json_success(['message' => 'Video uploaded successfully! It will be reviewed before publishing.']);
-        exit;
-
-    } catch (Exception $e) {
-        error_log('Unexpected error: ' . $e->getMessage());
-        wp_send_json_error(['message' => 'An unexpected error occurred']);
-        exit;
-    }
-}
-add_action('wp_ajax_nopriv_handle_video_upload', 'handle_video_upload');
-add_action('wp_ajax_handle_video_upload', 'handle_video_upload');
 
 function add_google_analytics() {
     ?>
@@ -440,3 +318,180 @@ function add_google_analytics() {
     <?php
 }
 add_action('wp_head', 'add_google_analytics');
+
+// Add to functions.php - Aggressively purge Nginx cache on ANY WordPress update
+function purge_all_nginx_cache() {
+    // Don't run during autosaves
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    
+    // Execute the shell command to purge the entire cache
+    exec('rm -rf /var/run/nginx-cache/*');
+}
+
+// Hook into ALL possible update actions
+// Content and post updates
+add_action('save_post', 'purge_all_nginx_cache');
+add_action('edit_post', 'purge_all_nginx_cache');
+add_action('delete_post', 'purge_all_nginx_cache');
+add_action('wp_trash_post', 'purge_all_nginx_cache');
+add_action('publish_post', 'purge_all_nginx_cache');
+add_action('publish_page', 'purge_all_nginx_cache');
+add_action('wp_update_nav_menu', 'purge_all_nginx_cache');
+
+// Comments
+add_action('edit_comment', 'purge_all_nginx_cache');
+add_action('delete_comment', 'purge_all_nginx_cache');
+add_action('wp_set_comment_status', 'purge_all_nginx_cache');
+add_action('wp_insert_comment', 'purge_all_nginx_cache');
+
+// Terms and taxonomies
+add_action('create_term', 'purge_all_nginx_cache');
+add_action('edit_term', 'purge_all_nginx_cache');
+add_action('delete_term', 'purge_all_nginx_cache');
+
+// Theme and plugin changes
+add_action('switch_theme', 'purge_all_nginx_cache');
+add_action('activated_plugin', 'purge_all_nginx_cache');
+add_action('deactivated_plugin', 'purge_all_nginx_cache');
+
+// Widgets and customizer
+add_action('update_option', 'purge_all_nginx_cache');
+add_action('updated_option', 'purge_all_nginx_cache');
+add_action('added_option', 'purge_all_nginx_cache');
+add_action('customize_save', 'purge_all_nginx_cache');
+add_action('customize_save_after', 'purge_all_nginx_cache');
+add_action('widgets_save_hook', 'purge_all_nginx_cache');
+add_action('sidebar_admin_setup', 'purge_all_nginx_cache');
+
+// Upload attachment
+add_action('add_attachment', 'purge_all_nginx_cache');
+add_action('edit_attachment', 'purge_all_nginx_cache');
+add_action('delete_attachment', 'purge_all_nginx_cache');
+
+// User updates
+add_action('user_register', 'purge_all_nginx_cache');
+add_action('profile_update', 'purge_all_nginx_cache');
+add_action('deleted_user', 'purge_all_nginx_cache');
+
+// Also purge when entering/exiting the admin area
+add_action('admin_init', 'purge_all_nginx_cache');
+add_action('wp_logout', 'purge_all_nginx_cache');
+
+
+function defer_scripts() {
+    if (!is_admin()) {
+        wp_dequeue_script('jquery');
+        wp_deregister_script('jquery');
+        wp_register_script('jquery', includes_url('/js/jquery/jquery.min.js'), false, null, true);
+        wp_enqueue_script('jquery');
+    }
+}
+add_action('wp_enqueue_scripts', 'defer_scripts', 999);
+
+/**
+ * Category Images - replacement for Categories Images plugin
+ */
+
+// Get category image URL (checks new key, falls back to old plugin's key)
+function phoebes_get_category_image_url($term_id) {
+    // Check new key first
+    $image_id = get_term_meta($term_id, 'category_image_id', true);
+
+    // Fall back to old Categories Images plugin key
+    if (!$image_id) {
+        $image_id = get_term_meta($term_id, 'z_taxonomy_image_id', true);
+    }
+
+    if ($image_id) {
+        $image_url = wp_get_attachment_image_url($image_id, 'full');
+        return $image_url ? $image_url : '';
+    }
+    return '';
+}
+
+// Add image field to category add form
+function phoebes_category_add_image_field() {
+    wp_enqueue_media();
+    ?>
+    <div class="form-field">
+        <label><?php _e('Category Image', 'phoebes'); ?></label>
+        <input type="hidden" name="category_image_id" id="category_image_id" value="">
+        <div id="category_image_preview"></div>
+        <button type="button" class="button" id="upload_category_image"><?php _e('Upload Image', 'phoebes'); ?></button>
+        <button type="button" class="button" id="remove_category_image" style="display:none;"><?php _e('Remove Image', 'phoebes'); ?></button>
+    </div>
+    <?php
+    phoebes_category_image_script();
+}
+add_action('category_add_form_fields', 'phoebes_category_add_image_field');
+
+// Add image field to category edit form
+function phoebes_category_edit_image_field($term) {
+    wp_enqueue_media();
+    $image_id = get_term_meta($term->term_id, 'category_image_id', true);
+    $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'thumbnail') : '';
+    ?>
+    <tr class="form-field">
+        <th scope="row"><label><?php _e('Category Image', 'phoebes'); ?></label></th>
+        <td>
+            <input type="hidden" name="category_image_id" id="category_image_id" value="<?php echo esc_attr($image_id); ?>">
+            <div id="category_image_preview">
+                <?php if ($image_url): ?>
+                    <img src="<?php echo esc_url($image_url); ?>" style="max-width:200px;height:auto;">
+                <?php endif; ?>
+            </div>
+            <button type="button" class="button" id="upload_category_image"><?php _e('Upload Image', 'phoebes'); ?></button>
+            <button type="button" class="button" id="remove_category_image" <?php echo $image_id ? '' : 'style="display:none;"'; ?>><?php _e('Remove Image', 'phoebes'); ?></button>
+        </td>
+    </tr>
+    <?php
+    phoebes_category_image_script();
+}
+add_action('category_edit_form_fields', 'phoebes_category_edit_image_field');
+
+// Save category image
+function phoebes_save_category_image($term_id) {
+    if (isset($_POST['category_image_id'])) {
+        $image_id = absint($_POST['category_image_id']);
+        if ($image_id) {
+            update_term_meta($term_id, 'category_image_id', $image_id);
+        } else {
+            delete_term_meta($term_id, 'category_image_id');
+        }
+    }
+}
+add_action('created_category', 'phoebes_save_category_image');
+add_action('edited_category', 'phoebes_save_category_image');
+
+// Media uploader script for category images
+function phoebes_category_image_script() {
+    ?>
+    <script>
+    jQuery(document).ready(function($) {
+        var frame;
+        $('#upload_category_image').on('click', function(e) {
+            e.preventDefault();
+            if (frame) { frame.open(); return; }
+            frame = wp.media({
+                title: '<?php _e('Select Category Image', 'phoebes'); ?>',
+                button: { text: '<?php _e('Use Image', 'phoebes'); ?>' },
+                multiple: false
+            });
+            frame.on('select', function() {
+                var attachment = frame.state().get('selection').first().toJSON();
+                $('#category_image_id').val(attachment.id);
+                $('#category_image_preview').html('<img src="' + attachment.url + '" style="max-width:200px;height:auto;">');
+                $('#remove_category_image').show();
+            });
+            frame.open();
+        });
+        $('#remove_category_image').on('click', function(e) {
+            e.preventDefault();
+            $('#category_image_id').val('');
+            $('#category_image_preview').html('');
+            $(this).hide();
+        });
+    });
+    </script>
+    <?php
+}

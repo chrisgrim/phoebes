@@ -15,7 +15,7 @@
 		<div class="site-info !m-auto bg-black flex justify-center py-8">
 			<div class="w-24 text-center">
                 <h5>Contact</h5>
-                <a href="https://thephoebes.com/2024/phoebe/">Phoebe</a>
+                <a href="<?php echo esc_url(home_url('/2024/phoebe/')); ?>">Phoebe</a>
             </div>
 		</div><!-- .site-info -->
 	</footer><!-- #colophon -->
