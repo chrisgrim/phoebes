@@ -172,7 +172,6 @@ function phoebes_handle_video_upload() {
         'post_type'    => 'post',
         'meta_input'   => [
             '_submission_email' => $email,
-            '_director_name' => sanitize_text_field($_POST['director_name'] ?? ''),
         ]
     ];
 
@@ -226,7 +225,6 @@ function phoebes_handle_video_upload() {
     // Send notification email to admin
     $admin_email = get_option('admin_email');
     $title = sanitize_text_field($_POST['movie_title']);
-    $director = sanitize_text_field($_POST['director_name'] ?? 'Not provided');
     $review_url = admin_url("post.php?post={$post_id}&action=edit");
 
     $subject = "New Film Submission: " . $title;
@@ -254,10 +252,6 @@ function phoebes_handle_video_upload() {
                                     <tr>
                                         <td style="color: #888888; font-size: 14px; padding: 8px 0;">Title:</td>
                                         <td style="color: #ffffff; font-size: 14px; padding: 8px 0; text-align: right;">' . esc_html($title) . '</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="color: #888888; font-size: 14px; padding: 8px 0;">Director:</td>
-                                        <td style="color: #ffffff; font-size: 14px; padding: 8px 0; text-align: right;">' . esc_html($director) . '</td>
                                     </tr>
                                     <tr>
                                         <td style="color: #888888; font-size: 14px; padding: 8px 0;">Submitted by:</td>

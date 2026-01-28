@@ -85,13 +85,6 @@ get_header();
                     </div>
 
                     <div>
-                        <label for="director_name" class="block text-sm font-medium mb-2">Director Name</label>
-                        <input type="text" id="director_name" name="director_name"
-                            placeholder="Who directed this film?"
-                            class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg focus:border-[#BA9E5E] focus:ring-1 focus:ring-[#BA9E5E] focus:outline-none text-white placeholder-zinc-500" style="color: white;">
-                    </div>
-
-                    <div>
                         <label class="block text-sm font-medium mb-2">Video File <span class="text-red-400">*</span></label>
                         <div id="video-dropzone" class="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-[#BA9E5E] transition-colors">
                             <div id="video-dropzone-content">
