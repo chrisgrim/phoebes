@@ -3,41 +3,49 @@
  * Handles filtering of posts by subcategory on category archive pages
  */
 document.addEventListener('DOMContentLoaded', function() {
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const posts = document.querySelectorAll('.post-item');
+    var filterButtons = document.querySelectorAll('.filter-btn');
+    var mobileSelect = document.getElementById('mobile-category-filter');
+    var posts = document.querySelectorAll('.post-item');
 
-    // Early return if no filter buttons exist
-    if (filterButtons.length === 0) {
-        return;
+    function filterPosts(slug) {
+        posts.forEach(function(post) {
+            if (!slug) {
+                post.style.display = 'block';
+            } else {
+                var cats = post.dataset.categories.split(' ');
+                post.style.display = cats.includes(slug) ? 'block' : 'none';
+            }
+        });
     }
 
-    filterButtons.forEach(button => {
+    // Desktop buttons
+    filterButtons.forEach(function(button) {
         button.addEventListener('click', function() {
-            // Remove active class from all other buttons
-            filterButtons.forEach(btn => {
-                if (btn !== this) {
-                    btn.classList.remove('active');
-                }
+            filterButtons.forEach(function(btn) {
+                if (btn !== button) btn.classList.remove('active');
             });
+            button.classList.toggle('active');
 
-            // Toggle current button
-            this.classList.toggle('active');
-            
-            // If no buttons are active, show all posts
-            const activeButtons = document.querySelectorAll('.filter-btn.active');
-            if (activeButtons.length === 0) {
-                posts.forEach(post => post.style.display = 'block');
-                return;
+            var active = document.querySelector('.filter-btn.active');
+            filterPosts(active ? active.dataset.category : '');
+
+            // Sync mobile dropdown
+            if (mobileSelect) {
+                mobileSelect.value = active ? active.dataset.category : '';
             }
-            
-            // Filter posts based on active category
-            const selectedCategory = this.dataset.category;
-            posts.forEach(post => {
-                const postCategories = post.dataset.categories.split(' ');
-                const shouldShow = postCategories.includes(selectedCategory);
-                post.style.display = shouldShow ? 'block' : 'none';
-            });
         });
     });
+
+    // Mobile dropdown
+    if (mobileSelect) {
+        mobileSelect.addEventListener('change', function() {
+            filterPosts(this.value);
+
+            // Sync desktop buttons
+            filterButtons.forEach(function(btn) {
+                btn.classList.toggle('active', btn.dataset.category === mobileSelect.value);
+            });
+        });
+    }
 });
 

@@ -124,12 +124,12 @@ jQuery(document).ready(function($) {
 
     videoDropzone.on('dragover', function(e) {
         e.preventDefault();
-        $(this).addClass('border-[#BA9E5E]');
+        $(this).addClass('border-[#C8A84E]');
     });
 
     videoDropzone.on('dragleave drop', function(e) {
         e.preventDefault();
-        $(this).removeClass('border-[#BA9E5E]');
+        $(this).removeClass('border-[#C8A84E]');
     });
 
     videoDropzone.on('drop', function(e) {
@@ -183,12 +183,12 @@ jQuery(document).ready(function($) {
 
     thumbDropzone.on('dragover', function(e) {
         e.preventDefault();
-        $(this).addClass('border-[#BA9E5E]');
+        $(this).addClass('border-[#C8A84E]');
     });
 
     thumbDropzone.on('dragleave drop', function(e) {
         e.preventDefault();
-        $(this).removeClass('border-[#BA9E5E]');
+        $(this).removeClass('border-[#C8A84E]');
     });
 
     thumbDropzone.on('drop', function(e) {

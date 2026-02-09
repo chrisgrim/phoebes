@@ -39,15 +39,15 @@ function phoebes_send_access_code() {
                     <table width="100%" max-width="500" cellpadding="0" cellspacing="0" style="max-width: 500px;">
                         <tr>
                             <td align="center" style="padding-bottom: 30px;">
-                                <h1 style="color: #BA9E5E; font-size: 28px; margin: 0; letter-spacing: 4px;">THE PHOEBES</h1>
+                                <h1 style="color: #C8A84E; font-size: 28px; margin: 0; letter-spacing: 4px;">THE PHOEBES</h1>
                                 <p style="color: #666666; font-size: 12px; margin: 5px 0 0 0; letter-spacing: 2px;">FILM FESTIVAL</p>
                             </td>
                         </tr>
                         <tr>
                             <td style="background-color: #1a1a1a; border-radius: 12px; padding: 40px; text-align: center;">
                                 <p style="color: #ffffff; font-size: 16px; margin: 0 0 20px 0;">Your upload access code is:</p>
-                                <div style="background-color: #000000; border: 2px solid #BA9E5E; border-radius: 8px; padding: 20px; margin: 0 0 20px 0;">
-                                    <span style="color: #BA9E5E; font-size: 36px; font-weight: bold; letter-spacing: 8px;">' . $code . '</span>
+                                <div style="background-color: #000000; border: 2px solid #C8A84E; border-radius: 8px; padding: 20px; margin: 0 0 20px 0;">
+                                    <span style="color: #C8A84E; font-size: 36px; font-weight: bold; letter-spacing: 8px;">' . $code . '</span>
                                 </div>
                                 <p style="color: #888888; font-size: 14px; margin: 0;">This code expires in 1 hour.</p>
                             </td>
@@ -241,13 +241,13 @@ function phoebes_handle_video_upload() {
                     <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px;">
                         <tr>
                             <td align="center" style="padding-bottom: 30px;">
-                                <h1 style="color: #BA9E5E; font-size: 28px; margin: 0; letter-spacing: 4px;">THE PHOEBES</h1>
+                                <h1 style="color: #C8A84E; font-size: 28px; margin: 0; letter-spacing: 4px;">THE PHOEBES</h1>
                                 <p style="color: #666666; font-size: 12px; margin: 5px 0 0 0; letter-spacing: 2px;">FILM FESTIVAL</p>
                             </td>
                         </tr>
                         <tr>
                             <td style="background-color: #1a1a1a; border-radius: 12px; padding: 40px;">
-                                <h2 style="color: #BA9E5E; font-size: 20px; margin: 0 0 20px 0;">New Film Submission</h2>
+                                <h2 style="color: #C8A84E; font-size: 20px; margin: 0 0 20px 0;">New Film Submission</h2>
                                 <table width="100%" cellpadding="0" cellspacing="0">
                                     <tr>
                                         <td style="color: #888888; font-size: 14px; padding: 8px 0;">Title:</td>
@@ -259,7 +259,7 @@ function phoebes_handle_video_upload() {
                                     </tr>
                                 </table>
                                 <div style="margin-top: 30px; text-align: center;">
-                                    <a href="' . esc_url($review_url) . '" style="display: inline-block; background-color: #BA9E5E; color: #000000; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold;">Review Submission</a>
+                                    <a href="' . esc_url($review_url) . '" style="display: inline-block; background-color: #C8A84E; color: #000000; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold;">Review Submission</a>
                                 </div>
                             </td>
                         </tr>

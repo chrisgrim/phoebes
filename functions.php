@@ -7,6 +7,23 @@
  * @package phoebes
  */
 
+// Abbreviate last name: "Chris Grim" → "Chris G."
+function phoebes_short_name($full_name) {
+    $parts = explode(' ', trim($full_name));
+    if (count($parts) < 2) return $full_name;
+    return $parts[0] . ' ' . strtoupper(mb_substr(end($parts), 0, 1)) . '.';
+}
+
+// Check if user has a custom Gravatar (cached per request)
+function phoebes_has_gravatar($user_id) {
+    static $cache = [];
+    if (isset($cache[$user_id])) return $cache[$user_id];
+    $url = get_avatar_url($user_id, ['size' => 1, 'default' => '404']);
+    $response = wp_remote_head($url);
+    $cache[$user_id] = !is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200;
+    return $cache[$user_id];
+}
+
 if ( ! defined( '_S_VERSION' ) ) {
     define( '_S_VERSION', '1.0.0' );
 }
@@ -78,15 +95,11 @@ function phoebes_scripts() {
     // Styles
     wp_enqueue_style('phoebes-style', get_stylesheet_uri(), array(), _S_VERSION);
     wp_style_add_data('phoebes-style', 'rtl', 'replace');
-    wp_enqueue_style('my-style', get_stylesheet_directory_uri() . '/css/app.css', false, '1.0', 'all');
+    wp_enqueue_style('my-style', get_stylesheet_directory_uri() . '/css/app.css', false, filemtime(get_stylesheet_directory() . '/css/app.css'), 'all');
     wp_enqueue_style('custom-style', get_template_directory_uri() . '/custom-style.css', array(), wp_get_theme()->get('Version'));
     
     // Scripts - jQuery will be handled by defer_scripts() function below
     wp_enqueue_script('phoebes-navigation', get_template_directory_uri() . '/js/navigation.js', array(), _S_VERSION, true);
-    
-    if (is_page_template('homepage.php')) {
-        wp_enqueue_script('custom-video-script', get_template_directory_uri() . '/js/custom-video.js', array(), '1.0.0', true);
-    }
     
     if (is_singular() && comments_open() && get_option('thread_comments')) {
         wp_enqueue_script('comment-reply');
@@ -118,16 +131,6 @@ if ( defined( 'JETPACK__VERSION' ) ) {
 
 // Video upload functionality
 require get_template_directory() . '/inc/video-upload.php';
-
-add_filter('walker_nav_menu_start_el', 'add_image_to_menu_item', 10, 4);
-function add_image_to_menu_item($item_output, $item, $depth, $args) {
-    if ($item->ID == 11) {
-        $image_url = site_url('/wp-content/uploads/2023/12/the_phoebes_01.png');
-        $site_name = get_bloginfo('name');
-        $item_output = "<div class='menu-centered-item w-40'><a href='" . esc_url($item->url) . "'><img src='" . esc_url($image_url) . "' alt='" . esc_attr($site_name . ' - The Phoebe\'s Film Festival') . "' /></a></div>";
-    }
-    return $item_output;
-}
 
 add_action('add_meta_boxes', 'custom_video_meta_box');
 function custom_video_meta_box() {
